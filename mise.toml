@@ -1,0 +1,30 @@
+[tools]
+# Core Runtimes - Pinned for consistency (Day 0 Testability)
+# Pin major.minor to ensure all devs/CI use the same logic.
+go = "1.22"
+python = "3.11"
+
+# Infrastructure & Tooling
+terraform = "1.9"
+usage = "latest"
+
+# Quality & Testing Tools (The "Guardrails")
+golangci-lint = "1.60"
+uv = "latest"
+
+[env]
+# Project-wide Environment Variables
+_.file = ".env"
+PYTHONUNBUFFERED = "1"
+
+[tasks]
+# Running `mise run setup` will install all dependencies.
+setup = { depends = ["install-go-deps", "install-py-deps"] }
+
+[tasks.install-go-deps]
+run = "go mod download"
+description = "Download Go modules"
+
+[tasks.install-py-deps]
+run = "uv sync"
+description = "Sync Python dependencies using uv"
