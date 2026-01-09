@@ -4,20 +4,31 @@ import (
 	"context"
 )
 
-// RequestPayload represents the incoming user request
+// Domain Models
 type RequestPayload struct {
+	Model  string `json:"model"`
 	Prompt string `json:"prompt"`
-	Model  string `json:"model"` // e.g., "gpt-4", "claude-3"
 }
 
-// LLMProvider defines the behavior for external AI providers.
-// This interface allows us to inject OpenAI, Anthropic, or a Mock.
-type LLMProvider interface {
+type GuardrailResponse struct {
+	Allowed        bool   `json:"allowed"`
+	Reason         string `json:"reason,omitempty"`
+	SanitizedInput string `json:"sanitized_input,omitempty"`
+}
+
+// --- Ports (Interfaces) ---
+
+// GuardrailPort defines the contract for guardrail service.
+type GuardrailPort interface {
+	Validate(ctx context.Context, input string) (GuardrailResponse, error)
+}
+
+// LLMPort defines the contract for external AI providers.
+type LLMPort interface {
 	Generate(ctx context.Context, payload RequestPayload) (string, error)
 }
 
-// GuardrailService defines how we talk to the Python sidecar.
-// For Day 0, we can mock this too.
-type GuardrailService interface {
-	ScanPrompt(ctx context.Context, prompt string) (bool, error) // Returns true if safe
+// ProxyServicePort defines the main entry point for the business logic.
+type ProxyServicePort interface {
+	Execute(ctx context.Context, payload RequestPayload) (string, error)
 }

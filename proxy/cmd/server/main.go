@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/simone-trubian/baldr/proxy/internal/adapters"
 	"github.com/simone-trubian/baldr/proxy/internal/core"
@@ -11,28 +10,24 @@ import (
 )
 
 func main() {
-	// 1. Configuration (Env Vars)
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	// 1. Initialize Adapters (Infrastructure)
+	// Later, these will be RealGuardrailAdapter and OpenAIAdapter
+	guardrail := &adapters.MockGuardrail{}
+	llm := &adapters.MockLLM{}
 
-	// 2. Dependency Injection (Wiring)
-	// TODO Swap these lines for the real adapters
-	llmProvider := &adapters.MockLLM{}
-	guardrailService := &adapters.MockGuardrail{}
+	// 2. Initialize Service (Core Logic)
+	// Dependency Injection happens here
+	service := core.NewBaldrService(guardrail, llm)
 
-	// 3. Service Initialization
-	svc := core.NewProxyService(llmProvider, guardrailService)
-	handler := handlers.NewProxyHandler(svc)
+	// 3. Initialize Handlers (Presentation)
+	handler := handlers.NewHTTPHandler(service)
 
-	// 4. Router Setup
+	// 4. Start Server
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /generate", handler.Generate)
+	mux.HandleFunc("/generate", handler.HandleGenerate)
 
-	// 5. Start Server
-	log.Printf("🛡️ Baldr Proxy running on port %s", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatalf("Server failed: %v", err)
+	log.Println("Baldr Proxy Service running on :8080")
+	if err := http.ListenAndServe(":8080", mux); err != nil {
+		log.Fatal(err)
 	}
 }

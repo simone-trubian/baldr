@@ -7,25 +7,31 @@ import (
 	"github.com/simone-trubian/baldr/proxy/internal/core"
 )
 
-type ProxyHandler struct {
-	service *core.ProxyService
+type HTTPHandler struct {
+	service core.ProxyServicePort
 }
 
-func NewProxyHandler(service *core.ProxyService) *ProxyHandler {
-	return &ProxyHandler{service: service}
+func NewHTTPHandler(s core.ProxyServicePort) *HTTPHandler {
+	return &HTTPHandler{service: s}
 }
 
-func (h *ProxyHandler) Generate(w http.ResponseWriter, r *http.Request) {
-	var payload core.RequestPayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+func (h *HTTPHandler) HandleGenerate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	response, err := h.service.HandleRequest(r.Context(), payload)
+	var payload core.RequestPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Context propagation is automatic here
+	response, err := h.service.Execute(r.Context(), payload)
 	if err != nil {
-		// In a real app, check error type to distinguish 400 vs 500
-		http.Error(w, err.Error(), http.StatusForbidden)
+		// TODO differentiate between 400 and 500 errors
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
