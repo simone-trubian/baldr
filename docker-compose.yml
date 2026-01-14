@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # -----------------------------
+  # The Go Orchestrator (Proxy)
+  # -----------------------------
+  proxy:
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile
+    container_name: baldr-proxy
+    ports:
+      - "8080:8080"
+    environment:
+      # Point to the python service by container name
+      - GUARDRAIL_URL=http://guardrail:8000
+    depends_on:
+      - guardrail
+    networks:
+      - baldr-net
+
+  # -----------------------------
+  # The Python Sidecar (Guardrail)
+  # -----------------------------
+  guardrail:
+    build:
+      context: ./guardrail
+      dockerfile: Dockerfile
+    container_name: baldr-guardrail
+    environment:
+      # Control how slow the Python service is for stress testing
+      - SIMULATED_LATENCY_MS=100
+    networks:
+      - baldr-net
+
+networks:
+  baldr-net:
+    driver: bridge
