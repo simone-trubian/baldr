@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/simone-trubian/baldr/proxy/internal/adapters"
 	"github.com/simone-trubian/baldr/proxy/internal/core"
@@ -11,8 +12,8 @@ import (
 
 func main() {
 	// 1. Initialize Adapters (Infrastructure)
-	// Later, these will be RealGuardrailAdapter and OpenAIAdapter
-	guardrail := &adapters.MockGuardrail{}
+	//guardrail := &adapters.MockGuardrail{}
+	guardrail := adapters.NewRemoteGuardrail(os.Getenv("GUARDRAIL_URL"))
 	llm := &adapters.MockLLM{}
 
 	// 2. Initialize Service (Core Logic)
