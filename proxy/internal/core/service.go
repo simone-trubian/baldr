@@ -6,16 +6,17 @@ import (
 	"log"
 
 	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
+	"github.com/simone-trubian/baldr/proxy/internal/core/ports"
 )
 
 type BaldrService struct {
-	guardrail GuardrailPort
-	llm       LLMPort
+	guardrail ports.GuardrailPort
+	llm       ports.LLMPort
 }
 
 // NewBaldrService injects dependencies.
 // This is critical for testability: we pass interfaces, not concrete types.
-func NewBaldrService(g GuardrailPort, l LLMPort) *BaldrService {
+func NewBaldrService(g ports.GuardrailPort, l ports.LLMPort) *BaldrService {
 	return &BaldrService{
 		guardrail: g,
 		llm:       l,

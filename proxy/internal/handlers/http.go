@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/simone-trubian/baldr/proxy/internal/core"
 	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
+	"github.com/simone-trubian/baldr/proxy/internal/core/ports"
 )
 
 type HTTPHandler struct {
-	service core.ProxyServicePort
+	service ports.ProxyServicePort
 }
 
-func NewHTTPHandler(s core.ProxyServicePort) *HTTPHandler {
+func NewHTTPHandler(s ports.ProxyServicePort) *HTTPHandler {
 	return &HTTPHandler{service: s}
 }
 
