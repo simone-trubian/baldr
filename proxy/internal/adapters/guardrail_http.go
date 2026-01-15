@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/simone-trubian/baldr/proxy/internal/core"
+	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
 )
 
 type RemoteGuardrail struct {
@@ -33,31 +33,31 @@ type guardrailResponse struct {
 	SanitizedInput string `json:"sanitized_input"`
 }
 
-func (r *RemoteGuardrail) Validate(ctx context.Context, input string) (core.GuardrailResponse, error) {
+func (r *RemoteGuardrail) Validate(ctx context.Context, input string) (domain.GuardrailResponse, error) {
 	reqBody, _ := json.Marshal(guardrailRequest{Prompt: input})
 
 	req, err := http.NewRequestWithContext(ctx, "POST", r.baseURL+"/validate", bytes.NewBuffer(reqBody))
 	if err != nil {
-		return core.GuardrailResponse{}, err
+		return domain.GuardrailResponse{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := r.client.Do(req)
 	if err != nil {
-		return core.GuardrailResponse{}, fmt.Errorf("guardrail service unreachable: %w", err)
+		return domain.GuardrailResponse{}, fmt.Errorf("guardrail service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return core.GuardrailResponse{}, fmt.Errorf("guardrail returned status: %d", resp.StatusCode)
+		return domain.GuardrailResponse{}, fmt.Errorf("guardrail returned status: %d", resp.StatusCode)
 	}
 
 	var res guardrailResponse
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return core.GuardrailResponse{}, err
+		return domain.GuardrailResponse{}, err
 	}
 
-	return core.GuardrailResponse{
+	return domain.GuardrailResponse{
 		Allowed:        res.Allowed,
 		Reason:         res.Reason,
 		SanitizedInput: res.SanitizedInput,

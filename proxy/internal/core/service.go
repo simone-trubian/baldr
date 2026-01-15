@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
 )
 
 type BaldrService struct {
@@ -20,7 +22,7 @@ func NewBaldrService(g GuardrailPort, l LLMPort) *BaldrService {
 	}
 }
 
-func (s *BaldrService) Execute(ctx context.Context, payload RequestPayload) (string, error) {
+func (s *BaldrService) Execute(ctx context.Context, payload domain.RequestPayload) (string, error) {
 	// 1. Guardrail Check (Orchestrator Pattern)
 	check, err := s.guardrail.Validate(ctx, payload.Prompt)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/simone-trubian/baldr/proxy/internal/core"
+	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
 )
 
 type HTTPHandler struct {
@@ -21,7 +22,7 @@ func (h *HTTPHandler) HandleGenerate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload core.RequestPayload
+	var payload domain.RequestPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
