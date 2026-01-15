@@ -11,15 +11,20 @@ import (
 	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
 )
 
+type GuardrailConfig struct {
+	BaseURL string
+	Timeout time.Duration
+}
+
 type RemoteGuardrail struct {
 	client  *http.Client
 	baseURL string
 }
 
-func NewRemoteGuardrail(url string) *RemoteGuardrail {
+func NewRemoteGuardrail(config GuardrailConfig) *RemoteGuardrail {
 	return &RemoteGuardrail{
-		client:  &http.Client{Timeout: 2 * time.Second}, // Fail fast!
-		baseURL: url,
+		client:  &http.Client{Timeout: config.Timeout}, // Fail fast!
+		baseURL: config.BaseURL,
 	}
 }
 

@@ -16,6 +16,7 @@ uv = "latest"
 # Project-wide Environment Variables
 _.file = ".env"
 PYTHONUNBUFFERED = "1"
+config_root = "./proxy"
 
 [tasks]
 # Running `mise run setup` will install all dependencies.
@@ -28,3 +29,10 @@ description = "Download Go modules"
 [tasks.install-py-deps]
 run = "uv sync"
 description = "Sync Python dependencies using uv"
+
+[tasks."test:unit"]
+run = "go test ./internal/core/*_test.go"
+dir = "proxy"
+[tasks."test:intr"]
+run = "go test *_test.go"
+dir = "proxy/tests/integration"

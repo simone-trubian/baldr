@@ -71,3 +71,25 @@ func TestBaldrService_Sanitization(t *testing.T) {
 	service := core.NewBaldrService(guardrail, llm)
 	service.Execute(context.Background(), domain.RequestPayload{Prompt: "unsafe prompt"})
 }
+
+/*
+func TestService_ProcessRequest_FailClosed(t *testing.T) {
+	// Define the "Table"
+	tests := []struct {
+		name           string
+		guardrailResp  error // Simulate adapter failure
+		failClosedMode bool
+		expectedStatus int
+	}{
+		{"Guardrail Down - Fail Closed", errors.New("timeout"), true, 500},
+		{"Guardrail Down - Fail Open", errors.New("timeout"), false, 200},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup logic...
+			// Assertions using "github.com/stretchr/testify/assert"
+		})
+	}
+}
+*/

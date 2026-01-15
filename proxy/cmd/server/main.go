@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/simone-trubian/baldr/proxy/internal/adapters"
 	"github.com/simone-trubian/baldr/proxy/internal/core"
@@ -12,13 +13,16 @@ import (
 
 func main() {
 	// 1. Initialize Adapters (Infrastructure)
-	//guardrail := &adapters.MockGuardrail{}
-	guardrail := adapters.NewRemoteGuardrail(os.Getenv("GUARDRAIL_URL"))
-	llm := &adapters.MockLLM{}
+	config := adapters.GuardrailConfig{
+		BaseURL: os.Getenv("GUARDRAIL_URL"),
+		Timeout: 1 * time.Second,
+	}
+	guardrailAdapter := adapters.NewRemoteGuardrail(config)
+	llmAdapter := &adapters.MockLLM{}
 
 	// 2. Initialize Service (Core Logic)
 	// Dependency Injection happens here
-	service := core.NewBaldrService(guardrail, llm)
+	service := core.NewBaldrService(guardrailAdapter, llmAdapter)
 
 	// 3. Initialize Handlers (Presentation)
 	handler := handlers.NewHTTPHandler(service)
