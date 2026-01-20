@@ -33,38 +33,39 @@ type guardrailRequest struct {
 }
 
 type guardrailResponse struct {
-	Allowed        bool   `json:"allowed"`
-	Reason         string `json:"reason"`
-	SanitizedInput string `json:"sanitized_input"`
+	Allowed        bool            `json:"allowed"`
+	Reason         string          `json:"reason"`
+	SanitizedInput json.RawMessage `json:"sanitized_input,omitempty"`
 }
 
-func (r *RemoteGuardrail) Validate(ctx context.Context, input string) (domain.GuardrailResponse, error) {
-	reqBody, _ := json.Marshal(guardrailRequest{Prompt: input})
-
-	req, err := http.NewRequestWithContext(ctx, "POST", r.baseURL+"/validate", bytes.NewBuffer(reqBody))
+func (a *RemoteGuardrail) Validate(ctx context.Context, payload []byte) (*domain.GuardrailResponse, error) {
+	// 1. Prepare Request to Python Sidecar
+	// We send the payload exactly as we received it from the user.
+	req, err := http.NewRequestWithContext(ctx, "POST", a.baseURL, bytes.NewReader(payload))
 	if err != nil {
-		return domain.GuardrailResponse{}, err
+		return nil, fmt.Errorf("failed to create guardrail request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := r.client.Do(req)
+	// 2. Execute
+	resp, err := a.client.Do(req)
 	if err != nil {
-		return domain.GuardrailResponse{}, fmt.Errorf("guardrail service unreachable: %w", err)
+		// This handles timeouts (context deadline) and connection refused
+		return nil, fmt.Errorf("guardrail connection error: %w", err)
 	}
 	defer resp.Body.Close()
 
+	// 3. Handle non-200 codes from the Sidecar logic
+	// If the Sidecar crashes (500), we treat it as an error to trigger Fail Closed.
 	if resp.StatusCode != http.StatusOK {
-		return domain.GuardrailResponse{}, fmt.Errorf("guardrail returned status: %d", resp.StatusCode)
+		return nil, fmt.Errorf("guardrail sidecar returned status: %d", resp.StatusCode)
 	}
 
-	var res guardrailResponse
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return domain.GuardrailResponse{}, err
+	// 4. Decode Response
+	var result domain.GuardrailResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode guardrail response: %w", err)
 	}
 
-	return domain.GuardrailResponse{
-		Allowed:        res.Allowed,
-		Reason:         res.Reason,
-		SanitizedInput: res.SanitizedInput,
-	}, nil
+	return &result, nil
 }

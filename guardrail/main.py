@@ -1,3 +1,4 @@
+from typing import Optional, Any
 from fastapi import FastAPI
 from pydantic import BaseModel
 import time
@@ -13,7 +14,7 @@ class ValidationRequest(BaseModel):
 class ValidationResponse(BaseModel):
     allowed: bool
     reason: str = ""
-    sanitized_input: str = ""
+    sanitized_input: Optional[Any] = None  # Allows returning a JSON object
 
 
 @app.post("/validate", response_model=ValidationResponse)

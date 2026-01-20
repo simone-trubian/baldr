@@ -18,7 +18,7 @@ func main() {
 		Timeout: 1 * time.Second,
 	}
 	guardrailAdapter := adapters.NewRemoteGuardrail(config)
-	llmAdapter := &adapters.MockLLM{}
+	llmAdapter := adapters.NewLLM("/target") // TODO config for LLM adapter
 
 	// 2. Initialize Service (Core Logic)
 	// Dependency Injection happens here
@@ -29,7 +29,7 @@ func main() {
 
 	// 4. Start Server
 	mux := http.NewServeMux()
-	mux.HandleFunc("/generate", handler.HandleGenerate)
+	mux.HandleFunc("/generate", handler.HandleProxy)
 
 	log.Println("Baldr Proxy Service running on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {

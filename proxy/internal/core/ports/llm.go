@@ -2,11 +2,11 @@ package ports
 
 import (
 	"context"
-
-	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
+	"io"
 )
 
-// LLMPort defines the contract for external AI providers.
 type LLMPort interface {
-	Generate(ctx context.Context, payload domain.RequestPayload) (string, error)
+	// SendRequest forwards the validated payload to the LLM.
+	// Returns a stream (io.ReadCloser) to support SSE, or an error.
+	Generate(ctx context.Context, payload []byte, headers map[string]string) (io.ReadCloser, error)
 }

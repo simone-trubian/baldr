@@ -49,9 +49,9 @@ func TestGuardrail_HappyPath_SchemaValidation(t *testing.T) {
 	}
 
 	type PythonResponseContract struct {
-		Allowed        bool   `json:"allowed"`
-		Reason         string `json:"reason"`
-		SanitizedInput string `json:"sanitized_input"`
+		Allowed        bool            `json:"allowed"`
+		Reason         string          `json:"reason"`
+		SanitizedInput json.RawMessage `json:"sanitized_input,omitempty"`
 	}
 
 	// 3. Prepare the Data
@@ -59,7 +59,7 @@ func TestGuardrail_HappyPath_SchemaValidation(t *testing.T) {
 	contractResp := PythonResponseContract{
 		Allowed:        false,
 		Reason:         "SQL Injection Detected",
-		SanitizedInput: "SELECT * FROM users",
+		SanitizedInput: []byte(`{"prompt": "SELECT * FROM users"}`),
 	}
 
 	// 4. Program MockServer
@@ -80,7 +80,7 @@ func TestGuardrail_HappyPath_SchemaValidation(t *testing.T) {
 		Prompt: "SELECT * FROM users",
 	}
 
-	result, err := adapter.Validate(ctx, domainInput.Prompt)
+	result, err := adapter.Validate(ctx, []byte(domainInput.Prompt))
 
 	// 7. Assertions
 	assert.NoError(t, err)
@@ -92,7 +92,6 @@ func TestGuardrail_HappyPath_SchemaValidation(t *testing.T) {
 	assert.Equal(t, "SELECT * FROM users", result.SanitizedInput)
 }
 
-// This does NOT use the real Python service
 func TestGuardrail_FailClosed_OnTimeout(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
@@ -136,7 +135,7 @@ func TestGuardrail_FailClosed_OnTimeout(t *testing.T) {
 
 	// 5. Execute
 	start := time.Now()
-	_, err = guardrailAdapter.Validate(ctx, "sensitive data")
+	_, err = guardrailAdapter.Validate(ctx, []byte("sensitive data"))
 	duration := time.Since(start)
 
 	// 6. Assertions

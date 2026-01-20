@@ -8,5 +8,6 @@ import (
 
 // GuardrailPort defines the contract for guardrail service.
 type GuardrailPort interface {
-	Validate(ctx context.Context, input string) (domain.GuardrailResponse, error)
+	// It returns the decision, reason, and potentially modified input.
+	Validate(ctx context.Context, payload []byte) (*domain.GuardrailResponse, error)
 }

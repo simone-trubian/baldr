@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
-	"github.com/simone-trubian/baldr/proxy/internal/core/domain"
 	"github.com/simone-trubian/baldr/proxy/internal/core/ports"
 )
 
@@ -15,27 +15,31 @@ type HTTPHandler struct {
 func NewHTTPHandler(s ports.ProxyServicePort) *HTTPHandler {
 	return &HTTPHandler{service: s}
 }
-
-func (h *HTTPHandler) HandleGenerate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var payload domain.RequestPayload
-	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Context propagation is automatic here
-	response, err := h.service.Execute(r.Context(), payload)
+func (h *HTTPHandler) HandleProxy(w http.ResponseWriter, r *http.Request) {
+	// 1. Buffer the body (We need it for both Guardrail and LLM)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		// TODO differentiate between 400 and 500 errors
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to read body", http.StatusBadRequest)
 		return
 	}
+	r.Body.Close() // Close the original reader
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"response": response})
+	// Extract headers to forward
+	headers := make(map[string]string)
+	headers["Content-Type"] = r.Header.Get("Content-Type")
+	headers["Authorization"] = r.Header.Get("Authorization")
+
+	// 2. Call Service
+	respStream, err := h.service.Execute(r.Context(), body, headers)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+	defer respStream.Close()
+
+	// 3. Stream Response back to client
+	w.Header().Set("Content-Type", "application/json") // Or text/event-stream
+	if _, err := io.Copy(w, respStream); err != nil {
+		fmt.Println("Error streaming response:", err)
+	}
 }
