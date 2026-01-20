@@ -37,9 +37,37 @@ func (h *HTTPHandler) HandleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer respStream.Close()
 
-	// 3. Stream Response back to client
-	w.Header().Set("Content-Type", "application/json") // Or text/event-stream
-	if _, err := io.Copy(w, respStream); err != nil {
-		fmt.Println("Error streaming response:", err)
+	// headers for SSE
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	// The Flushing Loop
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		// Fallback for non-flushing writers (unlikely in standard net/http)
+		io.Copy(w, respStream)
+		return
+	}
+
+	// Copy buffer and flush immediately
+	// Using a small buffer (e.g., 32 bytes) or simply copying byte-by-byte is inefficient.
+	// Better: use io.Copy but running in a loop is hard.
+	// Simplest robust way for LLM streaming:
+
+	buf := make([]byte, 1024) // 1KB buffer
+	for {
+		n, err := respStream.Read(buf)
+		if n > 0 {
+			w.Write(buf[:n])
+			flusher.Flush() // Force data to client immediately
+		}
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			fmt.Println("Error streaming response:", err)
+			break
+		}
 	}
 }
