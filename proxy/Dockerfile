@@ -1,15 +1,14 @@
 # ==========================================
 # Stage 1: The Builder
 # ==========================================
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # install git and certificates (needed to fetch dependencies)
 RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
-COPY go.mod ./
-# COPY go.sum ./  <-- Uncomment this once you actually run 'go mod tidy' and have a sum file
+COPY go.mod go.sum ./
 
 RUN go mod download
 

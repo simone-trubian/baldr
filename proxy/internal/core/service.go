@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -37,7 +38,7 @@ func (s *BaldrService) Execute(ctx context.Context, payload []byte, headers map[
 	// 3. PII Redaction / Sanitization Logic
 	// If the Python sidecar redacted data, we MUST use the new payload.
 	finalPayload := payload
-	if decision.SanitizedInput != nil {
+	if !bytes.Equal(decision.SanitizedInput, []byte("null")) {
 		// Assuming SanitizedInput is the full JSON body string.
 		// Convert back to bytes.
 		finalPayload = []byte(decision.SanitizedInput)

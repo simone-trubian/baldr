@@ -68,13 +68,17 @@ func TestProxyFlow_Sanitization(t *testing.T) {
 
 	// --- SETUP SYSTEM UNDER TEST ---
 
-	config := adapters.GuardrailConfig{
+	guardrailConfig := adapters.GuardrailConfig{
 		BaseURL: mockServerBaseUrl + "/guardrail",
 		Timeout: 2 * time.Second,
 	}
+	llmConfig := adapters.LLMConfig{
+		BaseURL: mockServerBaseUrl + "/v1/chat/completions",
+		APIKey:  "key",
+	}
 
-	guardrailAdapter := adapters.NewRemoteGuardrail(config)
-	llmAdapter := adapters.NewLLM(mockServerBaseUrl + "/v1/chat/completions")
+	guardrailAdapter := adapters.NewRemoteGuardrail(guardrailConfig)
+	llmAdapter := adapters.NewLLM(llmConfig)
 
 	svc := core.NewBaldrService(guardrailAdapter, llmAdapter)
 	handler := handlers.NewHTTPHandler(svc)
