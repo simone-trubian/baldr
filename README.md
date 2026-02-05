@@ -51,7 +51,7 @@ graph TD
 |Proxy    |Go 1.24       |🟢 Active |"Traffic control, Auth injection, SSE Streaming."|
 |Guardrail|Python 3.12+  |🟢 Active |Basic Semantic Validation (Pydantic).|
 |Storage  |Postgres/Redis|🔴 Roadmap|Async logging and Token attribution.|
-|Infra    |Docker Compose|🟡 Local  |Local dev (Target: EKS/Terraform)|
+|Infra    |Docker Compose|🟢 Active |Local dev (Target: EKS/Terraform)|
 
 ---
 
